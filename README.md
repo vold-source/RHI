@@ -1,5 +1,8 @@
 # RHI — ReShade HDR Installer
 
+> [!NOTE]
+> **Personal fork for testing.** This is a personal build of [TwoToneEddy's Linux port](https://github.com/TwoToneEddy/RHI/tree/linux_port) of [RankFTW's RHI](https://github.com/RankFTW/RHI). The only addition is an AppImage package; see [this fork's releases](https://github.com/vold-source/RHI/releases). It isn't supported by either author. Please report issues with the app itself to the original projects, and only AppImage packaging issues here.
+
 **One tool. Every game. Full HDR, DLSS, and NVIDIA driver management from a single window.**
 
 RHI detects your entire game library across every major store and handles ReShade, HDR mods, frame limiters, DLSS management, OptiScaler, shader packs, and NVIDIA driver profiles — all in one click.
