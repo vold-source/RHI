@@ -61,19 +61,22 @@ public sealed partial class MainWindow
         var ready = rs.Installed && state.LaunchConfigured && (mod == null || rdx.Installed) && (!hdrRequired || state.HdrConfigured) && !needsRef;
         var damaged = rs.Damaged || rdx.Damaged || re.Damaged;
         var channelChanged = rs.Installed && rs.Channel != prefs.Channel;
+        // Some executables don't reveal their API; ReShade can't pick a proxy DLL until the user chooses one.
+        var apiUnknown = !rs.Installed && _setup.Api(game, prefs) == RenoDXCommander.Models.GraphicsApiType.Unknown;
         var summary = new Grid { ColumnDefinitions = new("*,Auto") };
         string summaryTitle, summaryDetail;
         if (damaged) { summaryTitle = "Installation needs attention"; summaryDetail = "Some installed files are missing or changed. Open Advanced settings to review them."; }
         else if (ready) { summaryTitle = "✓  Ready to launch"; summaryDetail = rs.Applied && (mod == null || rdx.Applied) ? "ReShade and installed addons were loaded on the last launch." : "Your plugins and Steam setup are installed. Launch the game to apply them."; }
         else if (rs.Installed && !state.LaunchConfigured) { summaryTitle = "One step left: Steam setup"; summaryDetail = "Your plugins are installed. Let RHI finish the launch setup for you."; }
+        else if (apiUnknown) { summaryTitle = "Choose the graphics API"; summaryDetail = "RHI couldn't tell whether this game uses DirectX or OpenGL. Pick it under Advanced settings › ReShade › Graphics API; the game's PCGamingWiki page lists it."; }
         else if (hdrRequired && rdx.Installed && !state.HdrConfigured) { summaryTitle = "HDR setup needed"; summaryDetail = "Apply the game's HDR settings to finish setup. Launch the game once first if its settings are missing."; }
         else { summaryTitle = "Ready to install"; summaryDetail = (needsRef ? "RHI will install RE Framework, " : "RHI will install ") + (mod == null ? "ReShade. No matching RenoDX mod is selected." : "ReShade, the matching RenoDX mod and the required game settings."); }
         summary.Children.Add(new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 14, 0), Children = { Label(summaryTitle, 13, ready ? Green : Amber, true), Label(summaryDetail, 11, Secondary) } });
         if (!ready && game.Executable != null)
         {
-            var finish = Action(damaged ? "Review installation" : rs.Installed && !state.LaunchConfigured && !needsRef ? "Finish Steam setup" : "Install recommended", async () =>
+            var finish = Action(damaged ? "Review installation" : apiUnknown ? "Choose graphics API" : rs.Installed && !state.LaunchConfigured && !needsRef ? "Finish Steam setup" : "Install recommended", async () =>
             {
-                if (damaged) await OpenAdvanced();
+                if (damaged || apiUnknown) await OpenAdvanced();
                 else if (rs.Installed && !state.LaunchConfigured && !needsRef) await ShowSteamSetup(game); else await InstallRecommended(game);
             }, "success", "InstallRecommended");
             Grid.SetColumn(finish, 1); summary.Children.Add(finish);
