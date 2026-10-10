@@ -50,8 +50,22 @@ ln -s rhi-linux.png "$rhi_appdir/.DirIcon"
 
 rhi_version="$(git -C "$rhi_repo" describe --tags --always --dirty 2>/dev/null || echo unknown)"
 # Extract-and-run avoids needing FUSE on build machines and in containers.
-ARCH=x86_64 VERSION="$rhi_version" APPIMAGE_EXTRACT_AND_RUN=1 \
-    "$rhi_tool" --no-appstream --runtime-file "$rhi_runtime" "$rhi_appdir" "$rhi_work/RHI.AppImage"
-mv -f -- "$rhi_work/RHI.AppImage" "$rhi_output"
+# Embedded update info lets AppImageUpdate and Gear Lever fetch only changed blocks via the .zsync file.
+# CI defaults it to this repository's latest GitHub release; set RHI_APPIMAGE_UPDATE_INFO to override.
+rhi_update_info="${RHI_APPIMAGE_UPDATE_INFO:-}"
+if [[ -z "$rhi_update_info" && -n "${GITHUB_REPOSITORY:-}" ]]; then
+    rhi_update_info="gh-releases-zsync|${GITHUB_REPOSITORY%%/*}|${GITHUB_REPOSITORY#*/}|latest|RHI-x86_64.AppImage.zsync"
+fi
+rhi_update_args=()
+if [[ -n "$rhi_update_info" ]]; then rhi_update_args=(--updateinformation "$rhi_update_info"); fi
+(cd "$rhi_work" && ARCH=x86_64 VERSION="$rhi_version" APPIMAGE_EXTRACT_AND_RUN=1 \
+    "$rhi_tool" --no-appstream --runtime-file "$rhi_runtime" "${rhi_update_args[@]}" "$rhi_appdir" RHI-x86_64.AppImage)
+mv -f -- "$rhi_work/RHI-x86_64.AppImage" "$rhi_output"
+if [[ -f "$rhi_work/RHI-x86_64.AppImage.zsync" ]]; then
+    mv -f -- "$rhi_work/RHI-x86_64.AppImage.zsync" "$rhi_output.zsync"
+elif [[ -n "$rhi_update_info" ]]; then
+    echo 'appimagetool did not create the .zsync file.' >&2
+    exit 1
+fi
 (cd "$rhi_repo/artifacts" && sha256sum "$(basename -- "$rhi_output")" > "$(basename -- "$rhi_output").sha256")
 echo "AppImage: $rhi_output"

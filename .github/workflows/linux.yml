@@ -43,6 +43,8 @@ jobs:
         run: |
           cd artifacts && sha256sum -c RHI-x86_64.AppImage.sha256
           ./RHI-x86_64.AppImage --appimage-extract-and-run --help | grep -q 'RHI Linux'
+          ./RHI-x86_64.AppImage --appimage-updateinformation | grep -q '^gh-releases-zsync|'
+          test -s RHI-x86_64.AppImage.zsync
       - uses: actions/upload-artifact@v4
         with:
           name: RHI-linux-x64
@@ -51,6 +53,7 @@ jobs:
             artifacts/RHI-linux-x64.tar.gz.sha256
             artifacts/RHI-x86_64.AppImage
             artifacts/RHI-x86_64.AppImage.sha256
+            artifacts/RHI-x86_64.AppImage.zsync
           if-no-files-found: error
 
   fedora:
@@ -115,7 +118,8 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           rhi_assets=(artifacts/RHI-linux-x64.tar.gz artifacts/RHI-linux-x64.tar.gz.sha256
-            artifacts/RHI-x86_64.AppImage artifacts/RHI-x86_64.AppImage.sha256)
+            artifacts/RHI-x86_64.AppImage artifacts/RHI-x86_64.AppImage.sha256
+            artifacts/RHI-x86_64.AppImage.zsync)
           # A release created on the GitHub website creates its tag too; attach the build to it.
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "${rhi_assets[@]}" --clobber

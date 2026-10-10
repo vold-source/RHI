@@ -8,7 +8,7 @@ Native ReShade and RenoDX management for Proton games, tested on Bazzite x86_64.
 2. Make it executable: right-click › Properties › allow executing, or run `chmod +x RHI-x86_64.AppImage`.
 3. Double-click it. On Bazzite, **Gear Lever** can add it to the application menu and keep track of updates.
 
-To update, download the newer AppImage and replace the old file. Preferences and game backups are kept.
+To update, use Gear Lever's update button (or AppImageUpdate), which downloads only the changed parts using the `.zsync` file, or download the newer AppImage and replace the old file. Updates follow the repository's latest full (non-pre-release) release. Preferences and game backups are kept.
 
 ## Install and run (folder)
 
