@@ -50,7 +50,7 @@ ln -s rhi-linux.png "$rhi_appdir/.DirIcon"
 
 rhi_version="$(git -C "$rhi_repo" describe --tags --always --dirty 2>/dev/null || echo unknown)"
 # Extract-and-run avoids needing FUSE on build machines and in containers.
-# Embedded update info lets AppImageUpdate and Gear Lever fetch only changed blocks via the .zsync file.
+# Embedded update info lets AppImageUpdate and AppManager fetch only changed blocks via the .zsync file.
 # CI defaults it to this repository's latest GitHub release; set RHI_APPIMAGE_UPDATE_INFO to override.
 rhi_update_info="${RHI_APPIMAGE_UPDATE_INFO:-}"
 if [[ -z "$rhi_update_info" && -n "${GITHUB_REPOSITORY:-}" ]]; then
