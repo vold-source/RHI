@@ -2,7 +2,15 @@
 
 Native ReShade and RenoDX management for Proton games, tested on Bazzite x86_64.
 
-## Install and run
+## AppImage (single file)
+
+1. Download **RHI-x86_64.AppImage** from this release.
+2. Make it executable: right-click › Properties › allow executing, or run `chmod +x RHI-x86_64.AppImage`.
+3. Double-click it. On Bazzite, **Gear Lever** can add it to the application menu and keep track of updates.
+
+To update, download the newer AppImage and replace the old file. Preferences and game backups are kept.
+
+## Install and run (folder)
 
 1. Download **RHI-linux-x64.tar.gz** from this release (the source-code archives require building).
 2. Extract the entire archive into a permanent folder, such as `~/Applications/RHI`.
