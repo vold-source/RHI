@@ -4,7 +4,9 @@ This repository now includes a native Linux desktop application for managing Win
 
 ## Run
 
-For a ready-to-run build, download **RHI-linux-x64.tar.gz** from [a Linux release](https://github.com/TwoToneEddy/RHI/releases), extract it into a permanent folder, and run `./run-linux.sh` there. Run `./install.sh` in that folder to add an application-menu entry. The package includes .NET; no SDK, compilation, or root access is needed. Keep the accompanying files together. See [release installation and updates](LINUX-RELEASE.md).
+The simplest option is **RHI-x86_64.AppImage** from a Linux release: make it executable and run it (on Bazzite, Gear Lever adds it to the menu). `./scripts/build-appimage.sh` creates the same file from a local build.
+
+For a ready-to-run folder build, download **RHI-linux-x64.tar.gz** from [a Linux release](https://github.com/TwoToneEddy/RHI/releases), extract it into a permanent folder, and run `./run-linux.sh` there. Run `./install.sh` in that folder to add an application-menu entry. The package includes .NET; no SDK, compilation, or root access is needed. Keep the accompanying files together. See [release installation and updates](LINUX-RELEASE.md).
 
 To build from source on Bazzite:
 
