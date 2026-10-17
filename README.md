@@ -3,7 +3,7 @@
 > [!NOTE]
 > **Personal fork for testing.** This is a personal build of [TwoToneEddy's Linux port](https://github.com/TwoToneEddy/RHI/tree/linux_port) of [RankFTW's RHI](https://github.com/RankFTW/RHI). The only addition is an AppImage package; see [this fork's releases](https://github.com/vold-source/RHI/releases). It isn't supported by either author. Please report issues with the app itself to the original projects, and only AppImage packaging issues here.
 > 
-> Not everything from the Windows app works on Linux yet. Missing pieces include NVIDIA driver profile settings (ReBAR, Present Method), Windows HDR toggles, Luma, automatic detection of non-Steam launchers, native Linux Vulkan games, and ARM computers. See the full list under [Linux support boundaries](docs/LINUX.md#linux-support-boundaries).
+> Not everything from the Windows app works on Linux yet. Missing pieces include NVIDIA driver profile settings (ReBAR, Present Method), Windows HDR toggles, Luma, automatic detection of non-Steam launchers, native Linux Vulkan games, and ARM computers. See the full list under [Linux support boundaries](docs/LINUX.md#linux-support-boundaries). 
 
 **One tool. Every game. Full HDR, DLSS, and NVIDIA driver management from a single window.**
 
