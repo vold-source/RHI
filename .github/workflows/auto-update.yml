@@ -1,0 +1,142 @@
+# =============================================================================
+# Automatic updates from TwoToneEddy's Linux port
+# =============================================================================
+#
+# Once a day GitHub runs this on its own machines:
+#   1. sync:    stops if TwoToneEddy's linux_port has nothing new. Otherwise
+#               merges it into this fork's linux_port. A merge conflict stops
+#               the run here and nothing is changed.
+#   2. checks:  runs every normal check (linux.yml: Linux build and AppImage,
+#               Fedora, Windows) on the merged commit.
+#   3. publish: only if all checks passed, publishes the next linux-vX.Y.Z
+#               release with the AppImage (AppManager picks it up), then moves
+#               linux_port forward.
+# If any step fails, nothing is published and GitHub emails the repo owner.
+# Updates that change files in .github/workflows can't be pushed by GitHub's
+# built-in token, so those stop with an email and need a manual sync.
+#
+# It can also be started by hand: Actions -> Automatic update -> Run workflow.
+# "dry_run" there does steps 1 and 2 but publishes nothing.
+# =============================================================================
+
+name: Automatic update
+
+on:
+  schedule:
+    - cron: '23 6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Check only, publish nothing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-update
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://github.com/TwoToneEddy/RHI.git
+  UPSTREAM_BRANCH: linux_port
+  GIT_AUTHOR_NAME: vold-source
+  GIT_AUTHOR_EMAIL: 269562393+vold-source@users.noreply.github.com
+  GIT_COMMITTER_NAME: vold-source
+  GIT_COMMITTER_EMAIL: 269562393+vold-source@users.noreply.github.com
+
+jobs:
+  sync:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.merge.outputs.changed }}
+      sha: ${{ steps.merge.outputs.sha }}
+      base: ${{ steps.merge.outputs.base }}
+      upstream: ${{ steps.merge.outputs.upstream }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: linux_port
+          fetch-depth: 0
+      - name: Merge TwoToneEddy's update
+        id: merge
+        run: |
+          base="$(git rev-parse HEAD)"
+          git fetch --no-tags "$UPSTREAM_URL" "$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+          upstream="$(git rev-parse "refs/remotes/upstream/$UPSTREAM_BRANCH")"
+          if git merge-base --is-ancestor "$upstream" HEAD; then
+            echo "Nothing new from TwoToneEddy."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A conflict makes this command fail, which stops the whole run.
+          git merge --no-ff "$upstream" -m "Sync TwoToneEddy linux_port through ${upstream:0:7}"
+          # Park the merged commit on a side branch so the checks can build it.
+          # linux_port itself is only moved after every check has passed.
+          git push --force origin HEAD:refs/heads/auto-sync
+          {
+            echo "changed=true"
+            echo "sha=$(git rev-parse HEAD)"
+            echo "base=$base"
+            echo "upstream=$upstream"
+          } >> "$GITHUB_OUTPUT"
+
+  checks:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true'
+    # linux.yml's release job asks for write access, so the caller must allow
+    # it. That job only runs for tag pushes, so it is skipped here.
+    permissions:
+      contents: write
+    uses: ./.github/workflows/linux.yml
+    with:
+      ref: ${{ needs.sync.outputs.sha }}
+
+  publish:
+    needs: [sync, checks]
+    if: needs.sync.outputs.changed == 'true' && inputs.dry_run != true
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SHA: ${{ needs.sync.outputs.sha }}
+      BASE: ${{ needs.sync.outputs.base }}
+      UPSTREAM: ${{ needs.sync.outputs.upstream }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: RHI-linux-x64
+          path: artifacts
+      - name: Publish release
+        run: |
+          last="$(git tag --list 'linux-v*' --sort=-v:refname | grep -E '^linux-v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
+          IFS=. read -r major minor patch <<< "${last#linux-v}"
+          tag="linux-v$major.$minor.$((patch + 1))"
+          {
+            echo "Automatic update: brings in the latest changes from TwoToneEddy's Linux port."
+            echo
+            echo "Changes in TwoToneEddy's linux_port:"
+            git log --first-parent --format='- %s' "$BASE..$UPSTREAM"
+            echo
+            echo "Install and update with [AppManager](https://github.com/kem-a/AppManager). It picks up this update automatically."
+          } > notes.md
+          gh release create "$tag" \
+            artifacts/RHI-linux-x64.tar.gz artifacts/RHI-linux-x64.tar.gz.sha256 \
+            artifacts/RHI-x86_64.AppImage artifacts/RHI-x86_64.AppImage.sha256 \
+            artifacts/RHI-x86_64.AppImage.zsync \
+            --target "$SHA" --title "RHI Linux ${tag#linux-v}" --notes-file notes.md --latest
+      - name: Move linux_port forward
+        # After the release, so a failed release is retried the next day.
+        # Fast-forward only: if linux_port changed during the run, this fails.
+        run: git push origin "$SHA:refs/heads/linux_port"

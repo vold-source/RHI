@@ -7,6 +7,14 @@ on:
   pull_request:
     branches: [linux_port, main, master]
   workflow_dispatch:
+  # Lets auto-update.yml run every check on a merged commit before publishing it.
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to check (empty = the commit that started the run)
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -19,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
       - name: Read SDK pin
         id: sdk
         run: |
@@ -69,6 +78,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
       - name: Build, test, and publish on Fedora
         run: ./scripts/build-linux.sh
       - name: Check relocated package on Fedora
@@ -83,6 +93,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
       - name: Read SDK pin
         id: sdk
         shell: bash
