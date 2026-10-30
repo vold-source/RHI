@@ -92,6 +92,17 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ steps.sdk.outputs.version }}
+      # The Windows app's project copies ClrMD from the local NuGet cache
+      # without a PackageReference, so fetch it into the cache first.
+      - name: Fetch ClrMD for the Windows build
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:USERPROFILE '.nuget\packages\microsoft.diagnostics.runtime\3.1.512801'
+          if (-not (Test-Path (Join-Path $dir 'lib\net6.0\Microsoft.Diagnostics.Runtime.dll'))) {
+            $pkg = Join-Path $env:RUNNER_TEMP 'clrmd.zip'
+            Invoke-WebRequest 'https://api.nuget.org/v3-flatcontainer/microsoft.diagnostics.runtime/3.1.512801/microsoft.diagnostics.runtime.3.1.512801.nupkg' -OutFile $pkg
+            Expand-Archive $pkg -DestinationPath $dir -Force
+          }
       - name: Build Windows app with the shared core
         run: dotnet build RenoDXCommander/RenoDXCommander.csproj -c Release -p:Platform=x64 -r win-x64 --nologo
       - name: Run Windows tests
