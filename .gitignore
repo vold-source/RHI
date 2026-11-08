@@ -49,3 +49,7 @@ artifacts/
 # Claude Code personal settings (shared .claude/settings.json is committed)
 .claude/settings.local.json
 __pycache__/
+
+# Keep local Claude Code files (approved commands, keys) out of the fork.
+# Files already tracked here, like .claude/settings.json and .claude/rules/, are not affected.
+.claude/
